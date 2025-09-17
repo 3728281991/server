@@ -754,202 +754,148 @@
 
     <script>
         // Инициализация dashboard
-        // Проверка авторизации в dashboard.html
-        document.addEventListener('DOMContentLoaded', function() {
-        const isAuthenticated = localStorage.getItem('userAuthenticated') === 'true';
+document.addEventListener('DOMContentLoaded', function() {
+    // Проверка авторизации
+    const isAuthenticated = localStorage.getItem('userAuthenticated') === 'true';
+    const authToken = localStorage.getItem('authToken');
     
-            if (!isAuthenticated) {
-            window.location.href = 'index.html';
-            return;
-            }
-            
-            // Инициализация компонентов
-            initSidebar();
-            initCharts();
-            loadDashboardData();
-            
-            // Обновление данных каждые 30 секунд
-            setInterval(loadDashboardData, 30000);
+    if (!isAuthenticated || !authToken) {
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    // Инициализация компонентов
+    initSidebar();
+    initCharts();
+    loadDashboardData();
+    
+    // Обновление данных каждые 30 секунд
+    setInterval(loadDashboardData, 30000);
+});
+
+// Проверка авторизации
+function checkAuthentication() {
+    const isAuthenticated = localStorage.getItem('userAuthenticated') === 'true';
+    const authToken = localStorage.getItem('authToken');
+    
+    if (!isAuthenticated || !authToken) {
+        window.location.href = 'index.html';
+        return false;
+    }
+    return true;
+}
+
+// Инициализация боковой панели
+function initSidebar() {
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.querySelector('.sidebar');
+    
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
         });
+    }
+    
+    // Адаптивность для мобильных устройств
+    if (window.innerWidth < 768) {
+        sidebar.classList.remove('active');
+    }
+}
+
+// Загрузка данных dashboard
+async function loadDashboardData() {
+    if (!checkAuthentication()) return;
+    
+    try {
+        console.log('Загрузка данных dashboard...');
         
-        // Проверка авторизации
-        function checkAuthentication() {
-            const isAuthenticated = localStorage.getItem('userAuthenticated') === 'true';
-            const authToken = localStorage.getItem('authToken');
-            
-            if (!isAuthenticated || !authToken) {
-                window.location.href = 'index.html';
-                return;
-            }
-            
-            // Можно добавить проверку токена через API
-            console.log('Пользователь авторизован');
-        }
+        // Имитация загрузки данных
+        const mockData = {
+            users: 1243,
+            orders: 324,
+            revenue: 12843,
+            errors: 4
+        };
         
-        // Инициализация боковой панели
-        function initSidebar() {
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            const sidebar = document.querySelector('.sidebar');
-            
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', () => {
-                    sidebar.classList.toggle('active');
-                });
-            }
-            
-            // Адаптивность для мобильных устройств
-            if (window.innerWidth < 768) {
-                sidebar.classList.remove('active');
-            }
-        }
+        updateStats(mockData);
         
-        // Загрузка данных dashboard
-        async function loadDashboardData() {
-            try {
-                // Здесь можно добавить загрузку реальных данных с сервера
-                console.log('Загрузка данных dashboard...');
-                
-                // Имитация загрузки данных
-                const mockData = {
-                    users: 1243,
-                    orders: 324,
-                    revenue: 12843,
-                    errors: 4
-                };
-                
-                updateStats(mockData);
-                
-            } catch (error) {
-                console.error('Ошибка загрузки данных:', error);
-            }
-        }
+    } catch (error) {
+        console.error('Ошибка загрузки данных:', error);
+    }
+}
+
+// Обновление статистики
+function updateStats(data) {
+    const stats = {
+        users: document.querySelector('.stat-card:nth-child(1) h3'),
+        orders: document.querySelector('.stat-card:nth-child(2) h3'),
+        revenue: document.querySelector('.stat-card:nth-child(3) h3'),
+        errors: document.querySelector('.stat-card:nth-child(4) h3')
+    };
+    
+    if (stats.users) stats.users.textContent = data.users.toLocaleString();
+    if (stats.orders) stats.orders.textContent = data.orders.toLocaleString();
+    if (stats.revenue) stats.revenue.textContent = `₽${data.revenue.toLocaleString()}`;
+    if (stats.errors) stats.errors.textContent = data.errors;
+}
+
+// Инициализация графиков
+function initCharts() {
+    console.log('Инициализация графиков...');
+}
+
+// Выход из системы
+function logout() {
+    if (confirm('Вы уверены, что хотите выйти?')) {
+        // Очистка данных авторизации
+        localStorage.removeItem('userAuthenticated');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
         
-        // Обновление статистики
-        function updateStats(data) {
-            const stats = {
-                users: document.querySelector('.stat-card:nth-child(1) h3'),
-                orders: document.querySelector('.stat-card:nth-child(2) h3'),
-                revenue: document.querySelector('.stat-card:nth-child(3) h3'),
-                errors: document.querySelector('.stat-card:nth-child(4) h3')
-            };
-            
-            if (stats.users) stats.users.textContent = data.users.toLocaleString();
-            if (stats.orders) stats.orders.textContent = data.orders.toLocaleString();
-            if (stats.revenue) stats.revenue.textContent = `₽${data.revenue.toLocaleString()}`;
-            if (stats.errors) stats.errors.textContent = data.errors;
-        }
-        
-        // Инициализация графиков
-        function initCharts() {
-            // Здесь можно инициализировать реальные графики (Chart.js, etc.)
-            console.log('Инициализация графиков...');
-        }
-        
-        // Выход из системы
-        function logout() {
-            if (confirm('Вы уверены, что хотите выйти?')) {
-                // Очистка данных авторизации
-                localStorage.removeItem('userAuthenticated');
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('userData');
-                
-                // Перенаправление на страницу входа
-                window.location.href = 'index.html';
-            }
-        }
-        
-        // Обработчики событий для адаптивности
-        window.addEventListener('resize', function() {
-            const sidebar = document.querySelector('.sidebar');
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            
-            if (window.innerWidth >= 768) {
-                sidebar.classList.remove('active');
-                if (sidebarToggle) sidebarToggle.style.display = 'none';
-            } else {
-                if (sidebarToggle) sidebarToggle.style.display = 'flex';
-            }
-        });
-        
-        // Уведомления
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
-            notification.innerHTML = `
-                <div class="notification-content">
-                    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation' : 'info'}"></i>
-                    <span>${message}</span>
-                </div>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // Анимация появления
-            setTimeout(() => {
-                notification.classList.add('show');
-            }, 100);
-            
-            // Автоматическое скрытие
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => {
-                    notification.remove();
-                }, 300);
-            }, 3000);
-        }
-        
-        // Добавьте эти стили для уведомлений в CSS
-        const notificationStyles = `
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-            transform: translateX(100%);
-            opacity: 0;
-            transition: all 0.3s ease;
-            z-index: 10000;
-        }
-        
-        .notification.show {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        
-        .notification-success {
-            border-left: 4px solid var(--success);
-        }
-        
-        .notification-error {
-            border-left: 4px solid var(--danger);
-        }
-        
-        .notification-info {
-            border-left: 4px solid var(--primary);
-        }
-        
-        .notification-content {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .notification-content i {
-            font-size: 18px;
-        }
-        
-        .notification-success i { color: var(--success); }
-        .notification-error i { color: var(--danger); }
-        .notification-info i { color: var(--primary); }
-        `;
-        
-        // Добавление стилей для уведомлений
-        const styleSheet = document.createElement('style');
-        styleSheet.textContent = notificationStyles;
-        document.head.appendChild(styleSheet);
+        // Перенаправление на страницу входа
+        window.location.href = 'index.html';
+    }
+}
+
+// Обработчики событий для адаптивности
+window.addEventListener('resize', function() {
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    
+    if (window.innerWidth >= 768) {
+        sidebar.classList.remove('active');
+        if (sidebarToggle) sidebarToggle.style.display = 'none';
+    } else {
+        if (sidebarToggle) sidebarToggle.style.display = 'flex';
+    }
+});
+
+// Уведомления
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation' : 'info'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Анимация появления
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
+    
+    // Автоматическое скрытие
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 3000);
+}
     </script>
 </body>
 </html>
