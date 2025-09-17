@@ -754,9 +754,14 @@
 
     <script>
         // Инициализация dashboard
+        // Проверка авторизации в dashboard.html
         document.addEventListener('DOMContentLoaded', function() {
-            // Проверка авторизации
-            checkAuthentication();
+        const isAuthenticated = localStorage.getItem('userAuthenticated') === 'true';
+    
+            if (!isAuthenticated) {
+            window.location.href = 'index.html';
+            return;
+            }
             
             // Инициализация компонентов
             initSidebar();
