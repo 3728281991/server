@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Современная авторизация</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .background-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.1;
+        }
+
+        .shape-1 {
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(45deg, #ff7676, #f6d365);
+            top: -250px;
+            right: -100px;
+        }
+
+        .shape-2 {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(45deg, #84fab0, #8fd3f4);
+            bottom: -200px;
+            left: -100px;
+        }
+
+        .shape-3 {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(45deg, #a6c0fe, #f68084);
+            top: 50%;
+            right: 20%;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.8s ease;
+            transform-style: preserve-3d;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px) rotateX(10deg); }
+            to { opacity: 1; transform: translateY(0) rotateX(0); }
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo i {
+            font-size: 50px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-weight: 600;
+            font-size: 28px;
+        }
+
+        .logo p {
+            color: #666;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 25px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 5px;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .tab.active {
+            background: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            color: #667eea;
+        }
+
+        .form-container {
+            margin-bottom: 25px;
+        }
+
+        .form {
+            display: none;
+        }
+
+        .form.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            border: none;
+            background: #f5f5f5;
+            border-radius: 10px;
+            outline: none;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+
+        .input-group input:focus {
+            background: #eaeaea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #764ba2;
+            font-size: 18px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-google {
+            background: linear-gradient(90deg, #4285F4, #34A853);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 25px 0;
+            color: #666;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #ddd;
+        }
+
+        .divider span {
+            padding: 0 15px;
+            font-size: 14px;
+        }
+
+        .firebase-badge {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .firebase-badge img {
+            height: 20px;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 30px 20px;
+            }
+            
+            .tabs {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+    
+    <div class="container">
+        <div class="login-card">
+            <div class="logo">
+                <i class="fas fa-lock"></i>
+                <h1>Secure Auth</h1>
+                <p>Войдите в свою учетную запись</p>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="email">Email</div>
+                <div class="tab" data-tab="phone">Телефон</div>
+                <div class="tab" data-tab="google">Google</div>
+            </div>
+            
+            <div class="form-container">
+                <div class="form active" id="email-form">
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" placeholder="Ваш email" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" placeholder="Пароль" required>
+                    </div>
+                    
+                    <button class="btn" id="email-btn">Войти с Email</button>
+                </div>
+                
+                <div class="form" id="phone-form">
+                    <div class="input-group">
+                        <i class="fas fa-phone"></i>
+                        <input type="tel" id="phone" placeholder="+7 (123) 456-78-90" required>
+                    </div>
+                    
+                    <div class="input-group" id="code-group" style="display: none;">
+                        <i class="fas fa-sms"></i>
+                        <input type="text" id="code" placeholder="Код подтверждения" required>
+                    </div>
+                    
+                    <button class="btn" id="phone-btn">Получить код</button>
+                    <button class="btn" id="verify-btn" style="display: none;">Подтвердить код</button>
+                </div>
+                
+                <div class="form" id="google-form">
+                    <p style="text-align: center; margin-bottom: 20px; color: #666;">
+                        Войдите с помощью вашего аккаунта Google
+                    </p>
+                    <button class="btn btn-google" id="google-btn">
+                        <i class="fab fa-google"></i> Войти через Google
+                    </button>
+                </div>
+            </div>
+            
+            <div class="divider">
+                <span>или</span>
+            </div>
+            
+            <div class="firebase-badge">
+                Powered by <img src="https://www.gstatic.com/devrel-devsite/prod/v45f61267e228d6bc0312f894c0c5b49c0e0d06c17d9b687a87fcb7e6c11c9acf/firebase/images/touchicon-180.png" alt="Firebase"> Firebase
+            </div>
+            
+            <div id="status-message" class="status-message"></div>
+        </div>
+    </div>
+
+    <!-- Firebase App (core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <!-- Firebase Authentication -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <script>
+        // Ваша конфигурация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCHdDN07H3Dwa8goF9Go1NzbLt9v1DDL8E",
+            authDomain: "server-64297.firebaseapp.com",
+            projectId: "server-64297",
+            storageBucket: "server-64297.firebasestorage.app",
+            messagingSenderId: "1050876618618",
+            appId: "1:1050876618618:web:4e9499c8c92af81a2d98c3",
+            measurementId: "G-DXQ7H26501"
+        };
+
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // Переключение между вкладками
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.form').forEach(f => f.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(`${tab.dataset.tab}-form`).classList.add('active');
+            });
+        });
+
+        // Обработчики для кнопок
+        document.getElementById('email-btn').addEventListener('click', signInWithEmail);
+        document.getElementById('phone-btn').addEventListener('click', signInWithPhone);
+        document.getElementById('verify-btn').addEventListener('click', verifyCode);
+        document.getElementById('google-btn').addEventListener('click', signInWithGoogle);
+
+        // Функция для входа по email
+        function signInWithEmail() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const statusMessage = document.getElementById('status-message');
+            
+            if (!email || !password) {
+                showStatus('Пожалуйста, заполните все поля', 'error');
+                return;
+            }
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Успешный вход
+                    showStatus('Успешный вход! Перенаправление...', 'success');
+                    // Здесь можно добавить перенаправление на другую страницу
+                })
+                .catch((error) => {
+                    showStatus(`Ошибка: ${error.message}`, 'error');
+                });
+        }
+
+        // Функция для входа по телефону
+        let confirmationResult = null;
+        
+        function signInWithPhone() {
+            const phoneNumber = document.getElementById('phone').value;
+            const statusMessage = document.getElementById('status-message');
+            
+            if (!phoneNumber) {
+                showStatus('Пожалуйста, введите номер телефона', 'error');
+                return;
+            }
+            
+            const appVerifier = new firebase.auth.RecaptchaVerifier('phone-btn', {
+                size: 'invisible'
+            });
+            
+            auth.signInWithPhoneNumber(phoneNumber, appVerifier)
+                .then((result) => {
+                    confirmationResult = result;
+                    document.getElementById('phone-btn').style.display = 'none';
+                    document.getElementById('verify-btn').style.display = 'block';
+                    document.getElementById('code-group').style.display = 'block';
+                    showStatus('Код подтверждения отправлен на ваш телефон', 'success');
+                })
+                .catch((error) => {
+                    showStatus(`Ошибка: ${error.message}`, 'error');
+                });
+        }
+
+        function verifyCode() {
+            const code = document.getElementById('code').value;
+            
+            if (!code) {
+                showStatus('Пожалуйста, введите код подтверждения', 'error');
+                return;
+            }
+            
+            confirmationResult.confirm(code)
+                .then((result) => {
+                    showStatus('Телефон успешно подтвержден!', 'success');
+                })
+                .catch((error) => {
+                    showStatus(`Ошибка: ${error.message}`, 'error');
+                });
+        }
+
+        // Функция для входа через Google
+        function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    showStatus('Успешный вход через Google!', 'success');
+                })
+                .catch((error) => {
+                    showStatus(`Ошибка: ${error.message}`, 'error');
+                });
+        }
+
+        // Функция для отображения статуса
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('status-message');
+            statusElement.textContent = message;
+            statusElement.className = `status-message status-${type}`;
+            statusElement.style.display = 'block';
+            
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 5000);
+        }
+
+        // Слушатель изменения состояния аутентификации
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                console.log('Пользователь вошел в систему:', user);
+            } else {
+                console.log('Пользователь вышел из системы');
+            }
+        });
+    </script>
+</body>
+</html>
