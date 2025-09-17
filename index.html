@@ -341,22 +341,33 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
     <script>
-        // Ваша конфигурация Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyCHdDN07H3Dwa8goF9Go1NzbLt9v1DDL8E",
-            authDomain: "server-64297.firebaseapp.com",
-            projectId: "server-64297",
-            storageBucket: "server-64297.firebasestorage.app",
-            messagingSenderId: "1050876618618",
-            appId: "1:1050876618618:web:4e9499c8c92af81a2d98c3",
-            measurementId: "G-DXQ7H26501"
-        };
+    // Ваша конфигурация Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyCHdDN07H3Dwa8goF9Go1NzbLt9v1DDL8E",
+        authDomain: "server-64297.firebaseapp.com",
+        projectId: "server-64297",
+        storageBucket: "server-64297.firebasestorage.app",
+        messagingSenderId: "1050876618618",
+        appId: "1:1050876618618:web:4e9499c8c92af81a2d98c3",
+        measurementId: "G-DXQ7H26501"
+    };
 
-        // Инициализация Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
+    // Инициализация Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
 
-        // Переключение между вкладками
+    // Проверка, авторизован ли пользователь
+    function checkAuth() {
+        const user = auth.currentUser;
+        const isAuthenticated = localStorage.getItem('userAuthenticated') === 'true';
+        
+        if (user || isAuthenticated) {
+            window.location.href = 'main.html';
+        }
+    }
+
+    // Переключение между вкладками
+    function setupTabs() {
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -366,109 +377,213 @@
                 document.getElementById(`${tab.dataset.tab}-form`).classList.add('active');
             });
         });
+    }
 
-        // Обработчики для кнопок
+    // Настройка обработчиков кнопок
+    function setupEventListeners() {
         document.getElementById('email-btn').addEventListener('click', signInWithEmail);
         document.getElementById('phone-btn').addEventListener('click', signInWithPhone);
         document.getElementById('verify-btn').addEventListener('click', verifyCode);
         document.getElementById('google-btn').addEventListener('click', signInWithGoogle);
-
-        // Функция для входа по email
-        function signInWithEmail() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const statusMessage = document.getElementById('status-message');
-            
-            if (!email || !password) {
-                showStatus('Пожалуйста, заполните все поля', 'error');
-                return;
-            }
-            
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    // Успешный вход
-                    showStatus('Успешный вход! Перенаправление...', 'success');
-                    // Перенаправление на main.html
-                    setTimeout(() => {
-                        window.location.href = 'main.html';
-                    }, 1500);
-                })
-                .catch((error) => {
-                    showStatus(`Ошибка: ${error.message}`, 'error');
-                });
-        }
-
-        // Функция для входа по телефону
-        let confirmationResult = null;
         
-        function signInWithPhone() {
-            const phoneNumber = document.getElementById('phone').value;
-            const statusMessage = document.getElementById('status-message');
+        // Обработка Enter в полях ввода
+        document.getElementById('email').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') signInWithEmail();
+        });
+        
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') signInWithEmail();
+        });
+        
+        document.getElementById('phone').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') signInWithPhone();
+        });
+        
+        document.getElementById('code').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') verifyCode();
+        });
+    }
+
+    // Функция для входа по email
+    async function signInWithEmail() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        if (!email || !password) {
+            showStatus('Пожалуйста, заполните все поля', 'error');
+            return;
+        }
+        
+        try {
+            showStatus('Вход в систему...', 'success');
             
-            if (!phoneNumber) {
-                showStatus('Пожалуйста, введите номер телефона', 'error');
-                return;
-            }
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            const user = userCredential.user;
             
-            // Упрощенная версия без капчи
-            const appVerifier = {
-                type: 'recaptcha',
-                verify: () => Promise.resolve('fake-token')
-            };
+            // Сохраняем информацию о пользователе
+            localStorage.setItem('userAuthenticated', 'true');
+            localStorage.setItem('userEmail', user.email);
+            localStorage.setItem('userId', user.uid);
             
-            // Здесь будет логика отправки кода на телефон
+            showStatus('Успешный вход! Перенаправление...', 'success');
+            
+            // Перенаправление через 1 секунду
+            setTimeout(() => {
+                window.location.href = 'main.html';
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Ошибка входа:', error);
+            showStatus(`Ошибка: ${getErrorMessage(error)}`, 'error');
+        }
+    }
+
+    // Функция для входа по телефону
+    let confirmationResult = null;
+    
+    async function signInWithPhone() {
+        const phoneNumber = document.getElementById('phone').value;
+        
+        if (!phoneNumber) {
+            showStatus('Пожалуйста, введите номер телефона', 'error');
+            return;
+        }
+        
+        try {
+            showStatus('Отправка кода...', 'success');
+            
+            // Для демонстрации - имитируем отправку кода
             document.getElementById('phone-btn').style.display = 'none';
             document.getElementById('verify-btn').style.display = 'block';
             document.getElementById('code-group').style.display = 'block';
-            showStatus('Код подтверждения отправлен на ваш телефон', 'success');
-        }
-
-        function verifyCode() {
-            const code = document.getElementById('code').value;
             
-            if (!code) {
-                showStatus('Пожалуйста, введите код подтверждения', 'error');
-                return;
+            showStatus('Код подтверждения отправлен (демо: 123456)', 'success');
+            
+        } catch (error) {
+            console.error('Ошибка отправки кода:', error);
+            showStatus(`Ошибка: ${getErrorMessage(error)}`, 'error');
+        }
+    }
+
+    // Проверка кода подтверждения
+    async function verifyCode() {
+        const code = document.getElementById('code').value;
+        
+        if (!code) {
+            showStatus('Пожалуйста, введите код подтверждения', 'error');
+            return;
+        }
+        
+        try {
+            showStatus('Проверка кода...', 'success');
+            
+            // Для демонстрации - принимаем любой код
+            if (code === '123456') {
+                localStorage.setItem('userAuthenticated', 'true');
+                localStorage.setItem('userPhone', document.getElementById('phone').value);
+                
+                showStatus('Телефон подтвержден! Перенаправление...', 'success');
+                
+                setTimeout(() => {
+                    window.location.href = 'main.html';
+                }, 1000);
+            } else {
+                showStatus('Неверный код подтверждения', 'error');
             }
             
-            // Здесь будет логика проверки кода
-            showStatus('Телефон успешно подтвержден! Перенаправление...', 'success');
-            // Перенаправление на main.html
-            setTimeout(() => {
-                window.location.href = 'main.html';
-            }, 1500);
+        } catch (error) {
+            console.error('Ошибка проверки кода:', error);
+            showStatus(`Ошибка: ${getErrorMessage(error)}`, 'error');
         }
+    }
 
-        // Функция для входа через Google
-        function signInWithGoogle() {
-            // Здесь будет логика входа через Google
+    // Функция для входа через Google
+    async function signInWithGoogle() {
+        try {
+            showStatus('Подключение к Google...', 'success');
+            
+            const provider = new firebase.auth.GoogleAuthProvider();
+            const result = await auth.signInWithPopup(provider);
+            const user = result.user;
+            
+            // Сохраняем информацию о пользователе
+            localStorage.setItem('userAuthenticated', 'true');
+            localStorage.setItem('userEmail', user.email);
+            localStorage.setItem('userId', user.uid);
+            localStorage.setItem('userName', user.displayName);
+            
             showStatus('Вход через Google успешен! Перенаправление...', 'success');
-            // Перенаправление на main.html
-            setTimeout(() => {
-                window.location.href = 'main.html';
-            }, 1500);
-        }
-
-        // Функция для отображения статуса
-        function showStatus(message, type) {
-            const statusElement = document.getElementById('status-message');
-            statusElement.textContent = message;
-            statusElement.className = `status-message status-${type}`;
-            statusElement.style.display = 'block';
             
             setTimeout(() => {
-                statusElement.style.display = 'none';
-            }, 5000);
+                window.location.href = 'main.html';
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Ошибка входа через Google:', error);
+            showStatus(`Ошибка: ${getErrorMessage(error)}`, 'error');
         }
+    }
 
+    // Функция для отображения статуса
+    function showStatus(message, type) {
+        const statusElement = document.getElementById('status-message');
+        statusElement.textContent = message;
+        statusElement.className = `status-message status-${type}`;
+        statusElement.style.display = 'block';
+        
+        // Автоматическое скрытие через 5 секунд
+        setTimeout(() => {
+            statusElement.style.display = 'none';
+        }, 5000);
+    }
+
+    // Получение понятного сообщения об ошибке
+    function getErrorMessage(error) {
+        const errorMessages = {
+            'auth/invalid-email': 'Неверный формат email',
+            'auth/user-disabled': 'Аккаунт отключен',
+            'auth/user-not-found': 'Пользователь не найден',
+            'auth/wrong-password': 'Неверный пароль',
+            'auth/too-many-requests': 'Слишком много попыток. Попробуйте позже',
+            'auth/operation-not-allowed': 'Этот метод входа отключен',
+            'auth/network-request-failed': 'Ошибка сети. Проверьте подключение'
+        };
+        
+        return errorMessages[error.code] || error.message;
+    }
+
+    // Инициализация при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        checkAuth(); // Проверяем, не авторизован ли уже пользователь
+        setupTabs();
+        setupEventListeners();
+        
         // Слушатель изменения состояния аутентификации
         auth.onAuthStateChanged((user) => {
             if (user) {
                 console.log('Пользователь вошел в систему:', user);
+                localStorage.setItem('userAuthenticated', 'true');
             } else {
                 console.log('Пользователь вышел из системы');
+                localStorage.removeItem('userAuthenticated');
             }
         });
-    </script>
+    });
+
+    // Функция для выхода (можно использовать в других страницах)
+    function logout() {
+        auth.signOut().then(() => {
+            localStorage.removeItem('userAuthenticated');
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userPhone');
+            window.location.href = 'index.html';
+        }).catch((error) => {
+            console.error('Ошибка выхода:', error);
+        });
+    }
+</script>
 </body>
 </html>
+
