@@ -753,25 +753,39 @@
     </div>
 
     <script>
-        // Инициализация dashboard
+        /// Проверка авторизации при загрузке dashboard
 document.addEventListener('DOMContentLoaded', function() {
-    // Проверка авторизации
     const isAuthenticated = localStorage.getItem('userAuthenticated') === 'true';
-    const authToken = localStorage.getItem('authToken');
     
-    if (!isAuthenticated || !authToken) {
+    if (!isAuthenticated) {
+        // Немедленное перенаправление если не авторизован
         window.location.href = 'index.html';
         return;
     }
     
-    // Инициализация компонентов
+    // Только если авторизован - продолжаем загрузку dashboard
+    console.log('Пользователь авторизован, загружаем dashboard...');
+    
+    // Здесь ваш код инициализации dashboard
     initSidebar();
     initCharts();
     loadDashboardData();
-    
-    // Обновление данных каждые 30 секунд
-    setInterval(loadDashboardData, 30000);
 });
+
+// Функция выхода
+function logout() {
+    // Очищаем Firebase auth
+    firebase.auth().signOut().then(() => {
+        // Очищаем localStorage
+        localStorage.removeItem('userAuthenticated');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userName');
+        
+        // Перенаправляем на страницу входа
+        window.location.href = 'index.html';
+    });
+}
 
 // Проверка авторизации
 function checkAuthentication() {
