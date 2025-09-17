@@ -395,279 +395,296 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <script>
-        // Конфигурация Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyCHdDN07H3Dwa8goF9Go1NzbLt9v1DDL8E",
-            authDomain: "server-64297.firebaseapp.com",
-            projectId: "server-64297",
-            storageBucket: "server-64297.firebasestorage.app",
-            messagingSenderId: "1050876618618",
-            appId: "1:1050876618618:web:4e9499c8c92af81a2d98c3",
-            measurementId: "G-DXQ7H26501"
-        };
+    // Конфигурация Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyCHdDN07H3Dwa8goF9Go1NzbLt9v1DDL8E",
+        authDomain: "server-64297.firebaseapp.com",
+        projectId: "server-64297",
+        storageBucket: "server-64297.firebasestorage.app",
+        messagingSenderId: "1050876618618",
+        appId: "1:1050876618618:web:4e9499c8c92af81a2d98c3",
+        measurementId: "G-DXQ7H26501"
+    };
 
-        // Инициализация Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+    // Инициализация Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-        // Проверка авторизации при загрузке
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                // Пользователь уже авторизован - перенаправляем
-                saveUserData(user);
-                window.location.href = 'main.html';
-            }
-        });
+    // Флаг для предотвращения множественных перенаправлений
+    let isRedirecting = false;
 
-        // Переключение между вкладками
-        document.querySelectorAll('.auth-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabName = tab.dataset.tab;
-                
-                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-                
-                tab.classList.add('active');
-                
-                if (tabName === 'login') {
-                    showLogin();
-                } else if (tabName === 'register') {
-                    showRegister();
-                }
-            });
-        });
-
-        // Показать форму входа
-        function showLogin() {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+    // Проверка авторизации при загрузке
+    auth.onAuthStateChanged((user) => {
+        if (user && !isRedirecting) {
+            console.log('Пользователь уже авторизован:', user.email);
+            isRedirecting = true;
             
-            document.querySelector('[data-tab="login"]').classList.add('active');
-            document.getElementById('login-form').classList.add('active');
-        }
-
-        // Показать форму регистрации
-        function showRegister() {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-            
-            document.querySelector('[data-tab="register"]').classList.add('active');
-            document.getElementById('register-form').classList.add('active');
-        }
-
-        // Показать форму восстановления пароля
-        function showForgotPassword() {
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-            document.getElementById('forgot-form').classList.add('active');
-        }
-
-        // Переключение видимости пароля
-        function togglePassword(inputId, icon) {
-            const input = document.getElementById(inputId);
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
-        }
-
-        // Обработчики для кнопок
-        document.getElementById('login-btn').addEventListener('click', loginWithEmail);
-        document.getElementById('register-btn').addEventListener('click', registerWithEmail);
-        document.getElementById('forgot-btn').addEventListener('click', resetPassword);
-        document.getElementById('google-btn').addEventListener('click', loginWithGoogle);
-
-        // Обработка Enter в формах
-        document.getElementById('login-form').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') loginWithEmail();
-        });
-        
-        document.getElementById('register-form').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') registerWithEmail();
-        });
-        
-        document.getElementById('forgot-form').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') resetPassword();
-        });
-
-        // Функция входа по email
-        async function loginWithEmail() {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            
-            if (!validateEmail(email)) {
-                showStatus('Введите корректный email', 'error');
-                return;
-            }
-            
-            if (password.length < 6) {
-                showStatus('Пароль должен содержать минимум 6 символов', 'error');
-                return;
-            }
-            
-            try {
-                showStatus('Вход в систему...', 'success');
-                
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                const user = userCredential.user;
-                
-                // Сохраняем данные пользователя
-                await saveUserData(user);
-                
-                showStatus('Успешный вход! Перенаправление...', 'success');
-                
-                // Перенаправление
+            // Сохраняем данные и перенаправляем
+            saveUserData(user).then(() => {
                 setTimeout(() => {
-                    window.location.href = 'main.html';
-                }, 1000);
-                
-            } catch (error) {
-                handleAuthError(error);
-            }
+                    window.location.href = 'dashboard.html';
+                }, 100);
+            });
         }
+    });
 
-        // Функция регистрации
-        async function registerWithEmail() {
-            const name = document.getElementById('register-name').value;
-            const email = document.getElementById('register-email').value;
-            const password = document.getElementById('register-password').value;
-            const confirmPassword = document.getElementById('register-confirm').value;
+    // Переключение между вкладками
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.dataset.tab;
             
-            if (!name.trim()) {
-                showStatus('Введите ваше имя', 'error');
-                return;
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+            
+            tab.classList.add('active');
+            
+            if (tabName === 'login') {
+                showLogin();
+            } else if (tabName === 'register') {
+                showRegister();
             }
+        });
+    });
+
+    // Показать форму входа
+    function showLogin() {
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+        
+        document.querySelector('[data-tab="login"]').classList.add('active');
+        document.getElementById('login-form').classList.add('active');
+    }
+
+    // Показать форму регистрации
+    function showRegister() {
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+        
+        document.querySelector('[data-tab="register"]').classList.add('active');
+        document.getElementById('register-form').classList.add('active');
+    }
+
+    // Показать форму восстановления пароля
+    function showForgotPassword() {
+        document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+        document.getElementById('forgot-form').classList.add('active');
+    }
+
+    // Переключение видимости пароля
+    function togglePassword(inputId, icon) {
+        const input = document.getElementById(inputId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+
+    // Обработчики для кнопок
+    document.getElementById('login-btn').addEventListener('click', loginWithEmail);
+    document.getElementById('register-btn').addEventListener('click', registerWithEmail);
+    document.getElementById('forgot-btn').addEventListener('click', resetPassword);
+    document.getElementById('google-btn').addEventListener('click', loginWithGoogle);
+
+    // Обработка Enter в формах
+    document.getElementById('login-form').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') loginWithEmail();
+    });
+    
+    document.getElementById('register-form').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') registerWithEmail();
+    });
+    
+    document.getElementById('forgot-form').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') resetPassword();
+    });
+
+    // Функция входа по email
+    async function loginWithEmail() {
+        if (isRedirecting) return;
+        
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        
+        if (!validateEmail(email)) {
+            showStatus('Введите корректный email', 'error');
+            return;
+        }
+        
+        if (password.length < 6) {
+            showStatus('Пароль должен содержать минимум 6 символов', 'error');
+            return;
+        }
+        
+        try {
+            showStatus('Вход в систему...', 'success');
             
-            if (!validateEmail(email)) {
-                showStatus('Введите корректный email', 'error');
-                return;
-            }
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            const user = userCredential.user;
             
-            if (password.length < 6) {
-                showStatus('Пароль должен содержать минимум 6 символов', 'error');
-                return;
-            }
+            // Сохраняем данные пользователя
+            await saveUserData(user);
             
-            if (password !== confirmPassword) {
-                showStatus('Пароли не совпадают', 'error');
-                return;
-            }
+            showStatus('Успешный вход! Перенаправление...', 'success');
             
-            try {
-                showStatus('Регистрация...', 'success');
-                
-                // Создаем пользователя
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                const user = userCredential.user;
-                
-                // Сохраняем дополнительную информацию о пользователе
+            isRedirecting = true;
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 1000);
+            
+        } catch (error) {
+            handleAuthError(error);
+        }
+    }
+
+    // Функция регистрации
+    async function registerWithEmail() {
+        if (isRedirecting) return;
+        
+        const name = document.getElementById('register-name').value;
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+        const confirmPassword = document.getElementById('register-confirm').value;
+        
+        if (!name.trim()) {
+            showStatus('Введите ваше имя', 'error');
+            return;
+        }
+        
+        if (!validateEmail(email)) {
+            showStatus('Введите корректный email', 'error');
+            return;
+        }
+        
+        if (password.length < 6) {
+            showStatus('Пароль должен содержать минимум 6 символов', 'error');
+            return;
+        }
+        
+        if (password !== confirmPassword) {
+            showStatus('Пароли не совпадают', 'error');
+            return;
+        }
+        
+        try {
+            showStatus('Регистрация...', 'success');
+            
+            // Создаем пользователя
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+            
+            // Сохраняем дополнительную информацию о пользователе
+            await db.collection('users').doc(user.uid).set({
+                name: name,
+                email: email,
+                createdAt: new Date(),
+                lastLogin: new Date(),
+                role: 'user'
+            });
+            
+            // Обновляем профиль пользователя
+            await user.updateProfile({
+                displayName: name
+            });
+            
+            // Сохраняем данные пользователя
+            await saveUserData(user);
+            
+            showStatus('Регистрация успешна! Перенаправление...', 'success');
+            
+            isRedirecting = true;
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 1000);
+            
+        } catch (error) {
+            handleAuthError(error);
+        }
+    }
+
+    // Функция восстановления пароля
+    async function resetPassword() {
+        const email = document.getElementById('forgot-email').value;
+        
+        if (!validateEmail(email)) {
+            showStatus('Введите корректный email', 'error');
+            return;
+        }
+        
+        try {
+            showStatus('Отправка письма...', 'success');
+            
+            await auth.sendPasswordResetEmail(email);
+            
+            showStatus('Письмо для восстановления отправлено на ваш email', 'success');
+            
+            // Возвращаем к форме входа через 3 секунды
+            setTimeout(() => {
+                showLogin();
+            }, 3000);
+            
+        } catch (error) {
+            handleAuthError(error);
+        }
+    }
+
+    // Функция входа через Google
+    async function loginWithGoogle() {
+        if (isRedirecting) return;
+        
+        try {
+            showStatus('Подключение к Google...', 'success');
+            
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('email');
+            provider.addScope('profile');
+            
+            const result = await auth.signInWithPopup(provider);
+            const user = result.user;
+            
+            // Проверяем, новый ли это пользователь
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            
+            if (!userDoc.exists) {
+                // Сохраняем информацию о новом пользователе
                 await db.collection('users').doc(user.uid).set({
-                    name: name,
-                    email: email,
+                    name: user.displayName,
+                    email: user.email,
                     createdAt: new Date(),
                     lastLogin: new Date(),
-                    role: 'user'
+                    role: 'user',
+                    provider: 'google'
                 });
-                
-                // Обновляем профиль пользователя
-                await user.updateProfile({
-                    displayName: name
+            } else {
+                // Обновляем время последнего входа
+                await db.collection('users').doc(user.uid).update({
+                    lastLogin: new Date()
                 });
-                
-                // Сохраняем данные пользователя
-                await saveUserData(user);
-                
-                showStatus('Регистрация успешна! Перенаправление...', 'success');
-                
-                // Перенаправление
-                setTimeout(() => {
-                    window.location.href = 'main.html';
-                }, 1000);
-                
-            } catch (error) {
-                handleAuthError(error);
-            }
-        }
-
-        // Функция восстановления пароля
-        async function resetPassword() {
-            const email = document.getElementById('forgot-email').value;
-            
-            if (!validateEmail(email)) {
-                showStatus('Введите корректный email', 'error');
-                return;
             }
             
-            try {
-                showStatus('Отправка письма...', 'success');
-                
-                await auth.sendPasswordResetEmail(email);
-                
-                showStatus('Письмо для восстановления отправлено на ваш email', 'success');
-                
-                // Возвращаем к форме входа через 3 секунды
-                setTimeout(() => {
-                    showLogin();
-                }, 3000);
-                
-            } catch (error) {
-                handleAuthError(error);
-            }
+            // Сохраняем данные пользователя
+            await saveUserData(user);
+            
+            showStatus('Вход через Google успешен! Перенаправление...', 'success');
+            
+            isRedirecting = true;
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 1000);
+            
+        } catch (error) {
+            handleAuthError(error);
         }
+    }
 
-        // Функция входа через Google
-        async function loginWithGoogle() {
-            try {
-                showStatus('Подключение к Google...', 'success');
-                
-                const provider = new firebase.auth.GoogleAuthProvider();
-                provider.addScope('email');
-                provider.addScope('profile');
-                
-                const result = await auth.signInWithPopup(provider);
-                const user = result.user;
-                
-                // Проверяем, новый ли это пользователь
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                
-                if (!userDoc.exists) {
-                    // Сохраняем информацию о новом пользователе
-                    await db.collection('users').doc(user.uid).set({
-                        name: user.displayName,
-                        email: user.email,
-                        createdAt: new Date(),
-                        lastLogin: new Date(),
-                        role: 'user',
-                        provider: 'google'
-                    });
-                } else {
-                    // Обновляем время последнего входа
-                    await db.collection('users').doc(user.uid).update({
-                        lastLogin: new Date()
-                    });
-                }
-                
-                // Сохраняем данные пользователя
-                await saveUserData(user);
-                
-                showStatus('Вход через Google успешен! Перенаправление...', 'success');
-                
-                setTimeout(() => {
-                    window.location.href = 'main.html';
-                }, 1000);
-                
-            } catch (error) {
-                handleAuthError(error);
-            }
-        }
-
-        // Сохранение данных пользователя
-        async function saveUserData(user) {
+    // Сохранение данных пользователя
+    async function saveUserData(user) {
+        try {
             // Получаем дополнительную информацию из Firestore
             const userDoc = await db.collection('users').doc(user.uid).get();
             const userData = userDoc.exists ? userDoc.data() : {};
@@ -679,44 +696,57 @@
             localStorage.setItem('userName', user.displayName || userData.name || user.email.split('@')[0]);
             localStorage.setItem('userRole', userData.role || 'user');
             localStorage.setItem('loginTime', new Date().toISOString());
-        }
-
-        // Валидация email
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
-        }
-
-        // Обработка ошибок аутентификации
-        function handleAuthError(error) {
-            console.error('Auth error:', error);
             
-            const errorMessages = {
-                'auth/invalid-email': 'Неверный формат email',
-                'auth/user-disabled': 'Аккаунт отключен',
-                'auth/user-not-found': 'Пользователь не найден',
-                'auth/wrong-password': 'Неверный пароль',
-                'auth/email-already-in-use': 'Email уже используется',
-                'auth/weak-password': 'Пароль слишком простой',
-                'auth/too-many-requests': 'Слишком много попыток. Попробуйте позже',
-                'auth/operation-not-allowed': 'Этот метод входа отключен',
-                'auth/popup-closed-by-user': 'Окно входа было закрыто'
-            };
+            console.log('Данные пользователя сохранены:', user.email);
             
-            showStatus(errorMessages[error.code] || error.message, 'error');
+        } catch (error) {
+            console.error('Ошибка сохранения данных пользователя:', error);
+            // Сохраняем хотя бы базовые данные
+            localStorage.setItem('userAuthenticated', 'true');
+            localStorage.setItem('userId', user.uid);
+            localStorage.setItem('userEmail', user.email);
+            localStorage.setItem('userName', user.displayName || user.email.split('@')[0]);
+            localStorage.setItem('loginTime', new Date().toISOString());
         }
+    }
 
-        // Функция для отображения статуса
-        function showStatus(message, type) {
-            const statusElement = document.getElementById('status-message');
-            statusElement.textContent = message;
-            statusElement.className = `status-message status-${type}`;
-            statusElement.style.display = 'block';
-            
-            setTimeout(() => {
-                statusElement.style.display = 'none';
-            }, 5000);
-        }
-    </script>
+    // Валидация email
+    function validateEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
+
+    // Обработка ошибок аутентификации
+    function handleAuthError(error) {
+        console.error('Auth error:', error);
+        
+        const errorMessages = {
+            'auth/invalid-email': 'Неверный формат email',
+            'auth/user-disabled': 'Аккаунт отключен',
+            'auth/user-not-found': 'Пользователь не найден',
+            'auth/wrong-password': 'Неверный пароль',
+            'auth/email-already-in-use': 'Email уже используется',
+            'auth/weak-password': 'Пароль слишком простой',
+            'auth/too-many-requests': 'Слишком много попыток. Попробуйте позже',
+            'auth/operation-not-allowed': 'Этот метод входа отключен',
+            'auth/popup-closed-by-user': 'Окно входа было закрыто'
+        };
+        
+        showStatus(errorMessages[error.code] || error.message, 'error');
+    }
+
+    // Функция для отображения статуса
+    function showStatus(message, type) {
+        const statusElement = document.getElementById('status-message');
+        statusElement.textContent = message;
+        statusElement.className = `status-message status-${type}`;
+        statusElement.style.display = 'block';
+        
+        setTimeout(() => {
+            statusElement.style.display = 'none';
+        }, 5000);
+    }
+</script>
 </body>
 </html>
+
