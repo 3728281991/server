@@ -356,15 +356,23 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
-    // Проверка, авторизован ли пользователь
-    function checkAuth() {
-        const user = auth.currentUser;
-        const isAuthenticated = localStorage.getItem('userAuthenticated') === 'true';
-        
-        if (user || isAuthenticated) {
+    // Проверка авторизации при загрузке
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            // Пользователь уже авторизован через Firebase
+            console.log('Пользователь уже вошел:', user);
+            localStorage.setItem('userAuthenticated', 'true');
+            localStorage.setItem('userEmail', user.email);
+            localStorage.setItem('userId', user.uid);
+            
+            // Немедленное перенаправление
             window.location.href = 'main.html';
+        } else {
+            // Пользователь не авторизован
+            console.log('Пользователь не авторизован');
+            localStorage.removeItem('userAuthenticated');
         }
-    }
+    });
 
     // Переключение между вкладками
     function setupTabs() {
@@ -394,14 +402,6 @@
         document.getElementById('password').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') signInWithEmail();
         });
-        
-        document.getElementById('phone').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') signInWithPhone();
-        });
-        
-        document.getElementById('code').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') verifyCode();
-        });
     }
 
     // Функция для входа по email
@@ -427,10 +427,8 @@
             
             showStatus('Успешный вход! Перенаправление...', 'success');
             
-            // Перенаправление через 1 секунду
-            setTimeout(() => {
-                window.location.href = 'main.html';
-            }, 1000);
+            // Немедленное перенаправление
+            window.location.href = 'main.html';
             
         } catch (error) {
             console.error('Ошибка входа:', error);
@@ -438,9 +436,7 @@
         }
     }
 
-    // Функция для входа по телефону
-    let confirmationResult = null;
-    
+    // Функция для входа по телефону (демо)
     async function signInWithPhone() {
         const phoneNumber = document.getElementById('phone').value;
         
@@ -449,23 +445,17 @@
             return;
         }
         
-        try {
-            showStatus('Отправка кода...', 'success');
-            
-            // Для демонстрации - имитируем отправку кода
-            document.getElementById('phone-btn').style.display = 'none';
-            document.getElementById('verify-btn').style.display = 'block';
-            document.getElementById('code-group').style.display = 'block';
-            
-            showStatus('Код подтверждения отправлен (демо: 123456)', 'success');
-            
-        } catch (error) {
-            console.error('Ошибка отправки кода:', error);
-            showStatus(`Ошибка: ${getErrorMessage(error)}`, 'error');
-        }
+        showStatus('Отправка кода...', 'success');
+        
+        // Для демонстрации
+        document.getElementById('phone-btn').style.display = 'none';
+        document.getElementById('verify-btn').style.display = 'block';
+        document.getElementById('code-group').style.display = 'block';
+        
+        showStatus('Код подтверждения отправлен (демо: 123456)', 'success');
     }
 
-    // Проверка кода подтверждения
+    // Проверка кода подтверждения (демо)
     async function verifyCode() {
         const code = document.getElementById('code').value;
         
@@ -474,27 +464,16 @@
             return;
         }
         
-        try {
-            showStatus('Проверка кода...', 'success');
-            
-            // Для демонстрации - принимаем любой код
-            if (code === '123456') {
-                localStorage.setItem('userAuthenticated', 'true');
-                localStorage.setItem('userPhone', document.getElementById('phone').value);
-                
-                showStatus('Телефон подтвержден! Перенаправление...', 'success');
-                
-                setTimeout(() => {
-                    window.location.href = 'main.html';
-                }, 1000);
-            } else {
-                showStatus('Неверный код подтверждения', 'error');
-            }
-            
-        } catch (error) {
-            console.error('Ошибка проверки кода:', error);
-            showStatus(`Ошибка: ${getErrorMessage(error)}`, 'error');
-        }
+        showStatus('Проверка кода...', 'success');
+        
+        // Для демонстрации - принимаем любой код
+        localStorage.setItem('userAuthenticated', 'true');
+        localStorage.setItem('userPhone', document.getElementById('phone').value);
+        
+        showStatus('Телефон подтвержден! Перенаправление...', 'success');
+        
+        // Немедленное перенаправление
+        window.location.href = 'main.html';
     }
 
     // Функция для входа через Google
@@ -514,9 +493,8 @@
             
             showStatus('Вход через Google успешен! Перенаправление...', 'success');
             
-            setTimeout(() => {
-                window.location.href = 'main.html';
-            }, 1000);
+            // Немедленное перенаправление
+            window.location.href = 'main.html';
             
         } catch (error) {
             console.error('Ошибка входа через Google:', error);
@@ -531,7 +509,6 @@
         statusElement.className = `status-message status-${type}`;
         statusElement.style.display = 'block';
         
-        // Автоматическое скрытие через 5 секунд
         setTimeout(() => {
             statusElement.style.display = 'none';
         }, 5000);
@@ -544,9 +521,7 @@
             'auth/user-disabled': 'Аккаунт отключен',
             'auth/user-not-found': 'Пользователь не найден',
             'auth/wrong-password': 'Неверный пароль',
-            'auth/too-many-requests': 'Слишком много попыток. Попробуйте позже',
-            'auth/operation-not-allowed': 'Этот метод входа отключен',
-            'auth/network-request-failed': 'Ошибка сети. Проверьте подключение'
+            'auth/too-many-requests': 'Слишком много попыток. Попробуйте позже'
         };
         
         return errorMessages[error.code] || error.message;
@@ -554,36 +529,11 @@
 
     // Инициализация при загрузке страницы
     document.addEventListener('DOMContentLoaded', function() {
-        checkAuth(); // Проверяем, не авторизован ли уже пользователь
         setupTabs();
         setupEventListeners();
-        
-        // Слушатель изменения состояния аутентификации
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                console.log('Пользователь вошел в систему:', user);
-                localStorage.setItem('userAuthenticated', 'true');
-            } else {
-                console.log('Пользователь вышел из системы');
-                localStorage.removeItem('userAuthenticated');
-            }
-        });
     });
-
-    // Функция для выхода (можно использовать в других страницах)
-    function logout() {
-        auth.signOut().then(() => {
-            localStorage.removeItem('userAuthenticated');
-            localStorage.removeItem('userEmail');
-            localStorage.removeItem('userId');
-            localStorage.removeItem('userName');
-            localStorage.removeItem('userPhone');
-            window.location.href = 'index.html';
-        }).catch((error) => {
-            console.error('Ошибка выхода:', error);
-        });
-    }
 </script>
 </body>
 </html>
+
 
