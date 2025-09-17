@@ -59,30 +59,59 @@
         </div>
     </div>
 
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
     <script>
+        // Конфигурация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCHdDN07H3Dwa8goF9Go1NzbLt9v1DDL8E",
+            authDomain: "server-64297.firebaseapp.com",
+            projectId: "server-64297",
+            storageBucket: "server-64297.firebasestorage.app",
+            messagingSenderId: "1050876618618",
+            appId: "1:1050876618618:web:4e9499c8c92af81a2d98c3",
+            measurementId: "G-DXQ7H26501"
+        };
+
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
         // Проверяем авторизацию
-        const isAuthenticated = localStorage.getItem('userAuthenticated') === 'true';
-        const userEmail = localStorage.getItem('userEmail');
-        const userName = localStorage.getItem('userName');
-        const loginTime = localStorage.getItem('loginTime');
-        
-        // Обновляем информацию о пользователе
-        document.getElementById('user-name').textContent = userName || 'Неизвестно';
-        document.getElementById('user-email').textContent = userEmail || 'Неизвестно';
-        document.getElementById('login-time').textContent = loginTime ? 
-            new Date(loginTime).toLocaleString() : 'Неизвестно';
-        
-        if (isAuthenticated && userEmail) {
-            // Перенаправляем на dashboard через 2 секунды
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 2000);
-        } else {
-            // Если не авторизован, возвращаем на страницу входа
-            setTimeout(() => {
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // Пользователь авторизован в Firebase
+                const userName = localStorage.getItem('userName') || user.displayName || user.email.split('@')[0];
+                const userEmail = localStorage.getItem('userEmail') || user.email;
+                const loginTime = localStorage.getItem('loginTime');
+                
+                // Обновляем информацию о пользователе
+                document.getElementById('user-name').textContent = userName;
+                document.getElementById('user-email').textContent = userEmail;
+                document.getElementById('login-time').textContent = loginTime ? 
+                    new Date(loginTime).toLocaleString() : 'Только что';
+                
+                // Перенаправляем на dashboard через 2 секунды
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 2000);
+            } else {
+                // Если не авторизован, возвращаем на страницу входа
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+            }
+        });
+
+        // Дополнительная проверка через 1 секунду
+        setTimeout(() => {
+            const isAuthenticated = localStorage.getItem('userAuthenticated') === 'true';
+            if (!isAuthenticated) {
                 window.location.href = 'index.html';
-            }, 2000);
-        }
+            }
+        }, 1000);
     </script>
 </body>
 </html>
